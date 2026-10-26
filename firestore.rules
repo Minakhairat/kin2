@@ -1,0 +1,205 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny all unmapped paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (
+          request.auth.token.email != null && (
+            request.auth.token.email.lower() == 'minakhairat96@gmail.com' ||
+            request.auth.token.email.lower() == 'kero@kin-media-production.com'
+          )
+        ) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isClientOfDeliverable(delivData) {
+      return isSignedIn() &&
+             request.auth.token.email != null &&
+             delivData.clientEmail is string &&
+             delivData.clientEmail.lower() == request.auth.token.email.lower();
+    }
+
+    function isValidUser(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.email is string && data.email.size() <= 256 &&
+             data.role in ['admin', 'client'] &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128)) &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64));
+    }
+
+    function isValidDeliverable(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.clientEmail is string && data.clientEmail.size() > 0 && data.clientEmail.size() <= 256 &&
+             data.link is string && data.link.size() > 0 && data.link.size() <= 1000 &&
+             data.status in ['shooting', 'editing', 'review', 'delivered'] &&
+             data.createdBy is string && data.createdBy.size() <= 128 &&
+             (!('clientName' in data) || (data.clientName is string && data.clientName.size() <= 128)) &&
+             (!('clientPhone' in data) || (data.clientPhone is string && data.clientPhone.size() <= 32)) &&
+             (!('previewVideoUrl' in data) || (data.previewVideoUrl is string && data.previewVideoUrl.size() <= 1000)) &&
+             (!('serviceType' in data) || (data.serviceType in ['podcast', 'reels', 'commercial', 'other'])) &&
+             (!('recordingDate' in data) || (data.recordingDate is string && data.recordingDate.size() <= 64)) &&
+             (!('expiresAt' in data) || (data.expiresAt is string && data.expiresAt.size() <= 64)) &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
+             (!('viewCount' in data) || (data.viewCount is number)) &&
+             (!('downloadCount' in data) || (data.downloadCount is number)) &&
+             (!('lastViewedAt' in data) || (data.lastViewedAt is string && data.lastViewedAt.size() <= 64)) &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64)) &&
+             (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    function isValidRevision(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.deliverableId is string && data.deliverableId.size() <= 128 &&
+             data.authorEmail is string && data.authorEmail.size() <= 256 &&
+             data.authorUid is string && data.authorUid.size() <= 128 &&
+             data.comment is string && data.comment.size() > 0 && data.comment.size() <= 1000 &&
+             (!('timecode' in data) || (data.timecode is string && data.timecode.size() <= 32)) &&
+             (!('category' in data) || (data.category in ['cut', 'audio', 'color', 'caption', 'general'])) &&
+             (!('status' in data) || (data.status in ['pending', 'in_progress', 'resolved'])) &&
+             (!('adminReply' in data) || (data.adminReply is string && data.adminReply.size() <= 1000)) &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64));
+    }
+
+    function isValidTestimonial(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.clientName is string && data.clientName.size() > 0 && data.clientName.size() <= 128 &&
+             data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+             data.reviewAr is string && data.reviewAr.size() > 0 && data.reviewAr.size() <= 2000 &&
+             data.approved is bool &&
+             (!('companyOrRole' in data) || (data.companyOrRole is string && data.companyOrRole.size() <= 128)) &&
+             (!('reviewEn' in data) || (data.reviewEn is string && data.reviewEn.size() <= 2000)) &&
+             (!('serviceCategory' in data) || (data.serviceCategory in ['podcasts', 'reels', 'commercials', 'studio', 'other'])) &&
+             (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 1000)) &&
+             (!('verified' in data) || (data.verified is bool)) &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64));
+    }
+
+    function isValidBooking(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() <= 128 &&
+             data.phone is string && data.phone.size() > 0 && data.phone.size() <= 32 &&
+             data.price is number &&
+             data.status in ['pending', 'confirmed', 'completed', 'cancelled'] &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 256)) &&
+             (!('service' in data) || (data.service is string && data.service.size() <= 64)) &&
+             (!('packageId' in data) || (data.packageId is string && data.packageId.size() <= 64)) &&
+             (!('packageName' in data) || (data.packageName is string && data.packageName.size() <= 128)) &&
+             (!('preferredDate' in data) || (data.preferredDate is string && data.preferredDate.size() <= 64)) &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
+             (!('addons' in data) || (data.addons is list)) &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64));
+    }
+
+    // Admins registry
+    match /admins/{userId} {
+      allow read, write: if isValidId(userId) && isAdmin();
+    }
+
+    // Users profiles
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId) && isSignedIn() &&
+                    (isAdmin() || (request.auth.uid == userId && incoming().role == 'client')) &&
+                    isValidUser(incoming());
+      allow update: if isValidId(userId) && isSignedIn() &&
+                    (isAdmin() || (request.auth.uid == userId && incoming().role == existing().role && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']))) &&
+                    isValidUser(incoming());
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // Deliverables containing client links
+    match /deliverables/{deliverableId} {
+      allow get: if isValidId(deliverableId) && isSignedIn() && (
+        isAdmin() || isClientOfDeliverable(resource.data)
+      );
+
+      // Query enforcer: rule validates clientEmail against auth email
+      allow list: if isSignedIn() && (
+        isAdmin() || isClientOfDeliverable(resource.data)
+      );
+
+      allow create: if isValidId(deliverableId) && isAdmin() &&
+                    isValidDeliverable(incoming()) &&
+                    incoming().createdBy == request.auth.uid;
+
+      // Tiered update: Admin has full edit; Client can only update analytics (viewCount, downloadCount, lastViewedAt)
+      allow update: if isValidId(deliverableId) && isValidDeliverable(incoming()) && (
+        isAdmin() ||
+        (
+          isClientOfDeliverable(existing()) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['viewCount', 'downloadCount', 'lastViewedAt'])
+        )
+      );
+
+      allow delete: if isValidId(deliverableId) && isAdmin();
+
+      // Client Revisions Subcollection
+      match /revisions/{revisionId} {
+        allow get: if isValidId(revisionId) && isSignedIn() && (
+          isAdmin() ||
+          isClientOfDeliverable(get(/databases/$(database)/documents/deliverables/$(deliverableId)).data)
+        );
+
+        allow list: if isSignedIn() && (
+          isAdmin() ||
+          isClientOfDeliverable(get(/databases/$(database)/documents/deliverables/$(deliverableId)).data)
+        );
+
+        allow create: if isValidId(revisionId) && isSignedIn() &&
+                      isValidRevision(incoming()) &&
+                      incoming().authorUid == request.auth.uid &&
+                      incoming().deliverableId == deliverableId &&
+                      (
+                        isAdmin() ||
+                        isClientOfDeliverable(get(/databases/$(database)/documents/deliverables/$(deliverableId)).data)
+                      );
+
+        allow update, delete: if isValidId(revisionId) && isAdmin();
+      }
+    }
+
+    // Testimonials collection
+    match /testimonials/{testimonialId} {
+      allow get, list: if resource.data.approved == true || isAdmin();
+      allow create: if isValidId(testimonialId) && isValidTestimonial(incoming()) && (
+        isAdmin() || incoming().approved == false
+      );
+      allow update: if isValidId(testimonialId) && isValidTestimonial(incoming()) && isAdmin();
+      allow delete: if isValidId(testimonialId) && isAdmin();
+    }
+
+    // Bookings collection
+    match /bookings/{bookingId} {
+      allow get, list: if isAdmin();
+      allow create: if isValidId(bookingId) && isValidBooking(incoming());
+      allow update, delete: if isValidId(bookingId) && isAdmin();
+    }
+  }
+}

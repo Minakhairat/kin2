@@ -1,0 +1,137 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile in Kin Media Production",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID (auth UID)", "maxLength": 128 },
+        "email": { "type": "string", "description": "User email address", "maxLength": 256 },
+        "displayName": { "type": "string", "description": "Display name of the user", "maxLength": 128 },
+        "role": { "type": "string", "description": "Role of the user: admin or client", "enum": ["admin", "client"] },
+        "createdAt": { "type": "string", "description": "ISO timestamp of creation" }
+      },
+      "required": ["id", "email", "role"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Admin access permission record",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "description": "Email address of admin", "maxLength": 256 },
+        "createdAt": { "type": "string", "description": "ISO timestamp when admin role was granted" }
+      },
+      "required": ["email"]
+    },
+    "Deliverable": {
+      "title": "Deliverable",
+      "description": "Media project deliverable and link assigned by admin to client email",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Deliverable ID", "maxLength": 128 },
+        "title": { "type": "string", "description": "Project or session title", "maxLength": 200 },
+        "clientEmail": { "type": "string", "description": "Target client email permitted to access link", "maxLength": 256 },
+        "clientName": { "type": "string", "description": "Client name or brand", "maxLength": 128 },
+        "clientPhone": { "type": "string", "description": "Client phone number for WhatsApp dispatch", "maxLength": 32 },
+        "link": { "type": "string", "description": "Secure deliverable link (Drive, Frame.io, etc)", "maxLength": 1000 },
+        "previewVideoUrl": { "type": "string", "description": "Direct video or embed preview URL", "maxLength": 1000 },
+        "status": { "type": "string", "description": "Production state", "enum": ["shooting", "editing", "review", "delivered"] },
+        "serviceType": { "type": "string", "description": "Type of service", "enum": ["podcast", "reels", "commercial", "other"] },
+        "recordingDate": { "type": "string", "description": "Shoot date string", "maxLength": 64 },
+        "expiresAt": { "type": "string", "description": "ISO date string when link access expires", "maxLength": 64 },
+        "notes": { "type": "string", "description": "Session and editing notes for client", "maxLength": 2000 },
+        "viewCount": { "type": "number", "description": "Total views recorded" },
+        "downloadCount": { "type": "number", "description": "Total download clicks" },
+        "lastViewedAt": { "type": "string", "description": "ISO timestamp of last client access", "maxLength": 64 },
+        "createdBy": { "type": "string", "description": "Admin user ID who created deliverable", "maxLength": 128 },
+        "createdAt": { "type": "string", "description": "Timestamp created" },
+        "updatedAt": { "type": "string", "description": "Timestamp updated" }
+      },
+      "required": ["id", "title", "clientEmail", "link", "status", "createdBy"]
+    },
+    "Revision": {
+      "title": "Revision",
+      "description": "Client revision note or feedback on deliverable",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Revision ID", "maxLength": 128 },
+        "deliverableId": { "type": "string", "description": "Parent deliverable ID", "maxLength": 128 },
+        "authorEmail": { "type": "string", "description": "Email of author", "maxLength": 256 },
+        "authorUid": { "type": "string", "description": "UID of author", "maxLength": 128 },
+        "comment": { "type": "string", "description": "Revision comment", "maxLength": 1000 },
+        "timecode": { "type": "string", "description": "Video timestamp for revision (e.g. 03:45)", "maxLength": 32 },
+        "category": { "type": "string", "description": "Revision category", "enum": ["cut", "audio", "color", "caption", "general"] },
+        "status": { "type": "string", "description": "Revision status", "enum": ["pending", "in_progress", "resolved"] },
+        "adminReply": { "type": "string", "description": "Admin reply note", "maxLength": 1000 },
+        "createdAt": { "type": "string", "description": "Timestamp created" }
+      },
+      "required": ["id", "deliverableId", "authorEmail", "authorUid", "comment"]
+    },
+    "Testimonial": {
+      "title": "Testimonial",
+      "description": "Client review and testimonial for KIN Media Production",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Testimonial ID", "maxLength": 128 },
+        "clientName": { "type": "string", "description": "Name of the client", "maxLength": 128 },
+        "companyOrRole": { "type": "string", "description": "Client company, channel or title", "maxLength": 128 },
+        "rating": { "type": "number", "description": "Rating score between 1 and 5" },
+        "reviewAr": { "type": "string", "description": "Review text in Arabic", "maxLength": 2000 },
+        "reviewEn": { "type": "string", "description": "Review text in English", "maxLength": 2000 },
+        "serviceCategory": { "type": "string", "description": "Service category", "enum": ["podcasts", "reels", "commercials", "studio"] },
+        "avatarUrl": { "type": "string", "description": "Optional avatar or photo URL", "maxLength": 1000 },
+        "verified": { "type": "boolean", "description": "Whether the client project is verified" },
+        "approved": { "type": "boolean", "description": "Approval status by admin for public display" },
+        "createdAt": { "type": "string", "description": "Timestamp created" }
+      },
+      "required": ["id", "clientName", "rating", "reviewAr", "reviewEn", "approved"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Studio booking request and record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Booking reference ID", "maxLength": 128 },
+        "fullName": { "type": "string", "description": "Client full name", "maxLength": 128 },
+        "phone": { "type": "string", "description": "Client phone number", "maxLength": 32 },
+        "email": { "type": "string", "description": "Optional client email", "maxLength": 256 },
+        "service": { "type": "string", "description": "Service type", "maxLength": 64 },
+        "packageId": { "type": "string", "description": "Selected package ID", "maxLength": 64 },
+        "packageName": { "type": "string", "description": "Selected package name", "maxLength": 128 },
+        "preferredDate": { "type": "string", "description": "Preferred shoot date", "maxLength": 64 },
+        "addons": { "type": "array", "items": { "type": "string" }, "description": "Selected addons" },
+        "notes": { "type": "string", "description": "Client notes or details", "maxLength": 2000 },
+        "price": { "type": "number", "description": "Booking total or package price in EGP" },
+        "status": { "type": "string", "description": "Status of booking", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "description": "Timestamp created" }
+      },
+      "required": ["id", "fullName", "phone", "service", "status", "price"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile records indexed by auth UID"
+    },
+    "/admins/{userId}": {
+      "schema": "Admin",
+      "description": "Admin privileges collection indexed by user UID"
+    },
+    "/deliverables/{deliverableId}": {
+      "schema": "Deliverable",
+      "description": "Project deliverables containing secure media links targeted by client email"
+    },
+    "/deliverables/{deliverableId}/revisions/{revisionId}": {
+      "schema": "Revision",
+      "description": "Client revision and feedback requests per deliverable"
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": "Testimonial",
+      "description": "Client reviews and feedback displayed on public landing page"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Studio booking sessions and revenue tracking"
+    }
+  }
+}

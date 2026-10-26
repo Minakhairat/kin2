@@ -86,36 +86,6 @@ service cloud.firestore {
              (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64));
     }
 
-    function isValidTestimonial(data) {
-      return data.id is string && data.id.size() <= 128 &&
-             data.clientName is string && data.clientName.size() > 0 && data.clientName.size() <= 128 &&
-             data.rating is number && data.rating >= 1 && data.rating <= 5 &&
-             data.reviewAr is string && data.reviewAr.size() > 0 && data.reviewAr.size() <= 2000 &&
-             data.approved is bool &&
-             (!('companyOrRole' in data) || (data.companyOrRole is string && data.companyOrRole.size() <= 128)) &&
-             (!('reviewEn' in data) || (data.reviewEn is string && data.reviewEn.size() <= 2000)) &&
-             (!('serviceCategory' in data) || (data.serviceCategory in ['podcasts', 'reels', 'commercials', 'studio', 'other'])) &&
-             (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 1000)) &&
-             (!('verified' in data) || (data.verified is bool)) &&
-             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64));
-    }
-
-    function isValidBooking(data) {
-      return data.id is string && data.id.size() <= 128 &&
-             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() <= 128 &&
-             data.phone is string && data.phone.size() > 0 && data.phone.size() <= 32 &&
-             data.price is number &&
-             data.status in ['pending', 'confirmed', 'completed', 'cancelled'] &&
-             (!('email' in data) || (data.email is string && data.email.size() <= 256)) &&
-             (!('service' in data) || (data.service is string && data.service.size() <= 64)) &&
-             (!('packageId' in data) || (data.packageId is string && data.packageId.size() <= 64)) &&
-             (!('packageName' in data) || (data.packageName is string && data.packageName.size() <= 128)) &&
-             (!('preferredDate' in data) || (data.preferredDate is string && data.preferredDate.size() <= 64)) &&
-             (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
-             (!('addons' in data) || (data.addons is list)) &&
-             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64));
-    }
-
     // Admins registry
     match /admins/{userId} {
       allow read, write: if isValidId(userId) && isAdmin();
@@ -183,23 +153,6 @@ service cloud.firestore {
 
         allow update, delete: if isValidId(revisionId) && isAdmin();
       }
-    }
-
-    // Testimonials collection
-    match /testimonials/{testimonialId} {
-      allow get, list: if resource.data.approved == true || isAdmin();
-      allow create: if isValidId(testimonialId) && isValidTestimonial(incoming()) && (
-        isAdmin() || incoming().approved == false
-      );
-      allow update: if isValidId(testimonialId) && isValidTestimonial(incoming()) && isAdmin();
-      allow delete: if isValidId(testimonialId) && isAdmin();
-    }
-
-    // Bookings collection
-    match /bookings/{bookingId} {
-      allow get, list: if isAdmin();
-      allow create: if isValidId(bookingId) && isValidBooking(incoming());
-      allow update, delete: if isValidId(bookingId) && isAdmin();
     }
   }
 }

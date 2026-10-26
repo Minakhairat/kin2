@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { COMPANY_INFO, PODCAST_PACKAGES, REELS_PACKAGES } from '../data/content';
 import { Language, BookingFormData } from '../types';
 import { X, Send, CheckCircle2, Phone, MessageCircle } from 'lucide-react';
-import { createBookingRecord } from '../services/bookingsService';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -48,23 +47,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setSubmitted(true);
 
     const selectedPkg = allPackages.find((p) => p.id === formData.packageId);
-    const computedPrice = calculatedTotal || selectedPkg?.price || 15000;
-
-    // Save booking to Firestore for admin analytics & tracking
-    createBookingRecord({
-      fullName: formData.fullName,
-      phone: formData.phone,
-      email: formData.email,
-      service: selectedPkg?.category || 'podcasts',
-      packageId: formData.packageId,
-      packageName: selectedPkg?.name || 'Custom Package',
-      preferredDate: formData.preferredDate,
-      addons: formData.addons,
-      notes: formData.notes,
-      price: computedPrice,
-      status: 'pending',
-    }).catch(console.warn);
-
     const msg =
       lang === 'ar'
         ? `طلب حجز استوديو KIN جديد [${ref}]:\n- الاسم: ${formData.fullName}\n- رقم الهاتف: ${formData.phone}\n- الباقة: ${selectedPkg?.name || 'مخصصة'}\n- التاريخ: ${formData.preferredDate || 'أقرب ميعاد متاح'}\n${formData.notes ? `- ملاحظات: ${formData.notes}\n` : ''}أرجو تأكيد الحجز وإرسال تفاصيل جلسة التصوير.`

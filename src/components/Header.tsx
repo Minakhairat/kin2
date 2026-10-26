@@ -32,7 +32,6 @@ export const Header: React.FC<HeaderProps> = ({
     { href: '#services', label: lang === 'ar' ? 'الخدمات' : 'Services' },
     { href: '#pricing', label: lang === 'ar' ? 'الباكدجات والأسعار' : 'Pricing' },
     { href: '#portfolio', label: lang === 'ar' ? 'إنستجرام KIN' : 'Instagram' },
-    { href: '#testimonials', label: lang === 'ar' ? 'آراء العملاء' : 'Reviews' },
     { href: '#studio', label: lang === 'ar' ? 'الاستوديو' : 'The Studio' },
     { href: '#contact', label: lang === 'ar' ? 'تواصل معنا' : 'Contact' },
   ];

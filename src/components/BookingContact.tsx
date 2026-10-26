@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { COMPANY_INFO, PODCAST_PACKAGES, REELS_PACKAGES } from '../data/content';
 import { Language, BookingFormData } from '../types';
 import { Phone, MessageCircle, Instagram, MapPin, Send, CheckCircle2, Calendar, Clock, Sparkles } from 'lucide-react';
+import { createBookingRecord } from '../services/bookingsService';
 
 interface BookingContactProps {
   lang: Language;
@@ -40,8 +41,25 @@ export const BookingContact: React.FC<BookingContactProps> = ({
     setBookingRef(ref);
     setSubmitted(true);
 
-    // Format WhatsApp prefilled message
     const selectedPkg = allPackages.find((p) => p.id === formData.packageId);
+    const computedPrice = calculatedTotal || selectedPkg?.price || 15000;
+
+    // Save booking to Firestore for admin analytics & tracking
+    createBookingRecord({
+      fullName: formData.fullName,
+      phone: formData.phone,
+      email: formData.email,
+      service: selectedPkg?.category || 'podcasts',
+      packageId: formData.packageId,
+      packageName: selectedPkg?.name || 'Custom Package',
+      preferredDate: formData.preferredDate,
+      addons: formData.addons,
+      notes: formData.notes,
+      price: computedPrice,
+      status: 'pending',
+    }).catch(console.warn);
+
+    // Format WhatsApp prefilled message
     const msg =
       lang === 'ar'
         ? `طلب حجز جديد في استوديو KIN [${ref}]:\n- الاسم: ${formData.fullName}\n- الهاتف: ${formData.phone}\n- الخدمة: ${selectedPkg?.category === 'podcasts' ? 'بودكاست ولقاءات' : 'ريلز شهرية'}\n- الباقة: ${selectedPkg?.name || 'مخصصة'}\n- التاريخ المفضل: ${formData.preferredDate || 'أقرب ميعاد متاح'}\n${formData.notes ? `- ملاحظات: ${formData.notes}\n` : ''}أرجو تأكيد الحجز وإرسال تفاصيل جلسة التصوير.`

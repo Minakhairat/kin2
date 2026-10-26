@@ -30,7 +30,9 @@ import {
   Sparkles,
   Layers,
   Send,
-  Timer
+  Timer,
+  Award,
+  BarChart3
 } from 'lucide-react';
 import { Language } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -45,6 +47,10 @@ import {
   subscribeRevisions,
   updateRevisionStatus,
 } from '../services/deliverablesService';
+import { BookingRecord, subscribeAllBookings } from '../services/bookingsService';
+import { Testimonial, subscribeAllTestimonials } from '../services/testimonialsService';
+import { AdminVisualDashboard } from './AdminVisualDashboard';
+import { AdminTestimonialsModeration } from './AdminTestimonialsModeration';
 
 interface AdminPortalModalProps {
   isOpen: boolean;
@@ -60,9 +66,11 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
   onOpenClientPortal,
 }) => {
   const { user, isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'list' | 'add' | 'clients'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'list' | 'add' | 'clients' | 'testimonials'>('dashboard');
 
   const [deliverables, setDeliverables] = useState<DeliverableItem[]>([]);
+  const [bookings, setBookings] = useState<BookingRecord[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -103,7 +111,7 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
     if (!isOpen || !isAdmin) return;
 
     setLoadingList(true);
-    const unsubscribe = subscribeAllDeliverables(
+    const unsubscribeDeliverables = subscribeAllDeliverables(
       (items) => {
         setDeliverables(items);
         setLoadingList(false);
@@ -114,7 +122,21 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
       }
     );
 
-    return () => unsubscribe();
+    const unsubscribeBookings = subscribeAllBookings(
+      (items) => setBookings(items),
+      (err) => console.warn('Bookings load note:', err)
+    );
+
+    const unsubscribeTestimonials = subscribeAllTestimonials(
+      (items) => setTestimonials(items),
+      (err) => console.warn('Testimonials load note:', err)
+    );
+
+    return () => {
+      unsubscribeDeliverables();
+      unsubscribeBookings();
+      unsubscribeTestimonials();
+    };
   }, [isOpen, isAdmin]);
 
   // Revisions subscription
@@ -470,6 +492,21 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                 {clientEmailMap.size}
               </span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('testimonials')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'testimonials'
+                  ? 'bg-[#C82626] text-white shadow-sm'
+                  : 'text-[#141211]/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10'
+              }`}
+            >
+              <Award className="w-4 h-4" />
+              <span>{lang === 'ar' ? 'آراء وتقييمات العملاء' : 'Testimonials'}</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-black/15 dark:bg-white/20 text-[10px]">
+                {testimonials.length}
+              </span>
+            </button>
           </div>
 
           <div className="hidden sm:flex items-center gap-3 text-xs text-[#141211]/60 dark:text-white/60">
@@ -508,73 +545,22 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
             </div>
           )}
 
-          {/* TAB 1: EXECUTIVE DASHBOARD */}
+          {/* TAB 1: EXECUTIVE DASHBOARD WITH RECHARTS CHARTS */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
-              {/* Stat KPI Cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-                <div className="p-4 rounded-2xl bg-white dark:bg-[#1a1716] border border-black/10 dark:border-white/10 shadow-sm space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#141211]/60 dark:text-white/60">
-                      {lang === 'ar' ? 'إجمالي المشاريع المسجلة' : 'Total Projects'}
-                    </span>
-                    <FolderGit2 className="w-4 h-4 text-[#C82626]" />
-                  </div>
-                  <p className="text-2xl font-black text-[#141211] dark:text-white font-mono">
-                    {totalProjects}
-                  </p>
-                  <p className="text-[11px] text-[#141211]/50 dark:text-white/50">
-                    {lang === 'ar' ? 'شاملة البودكاست والريلز' : 'Podcasts & Reels'}
-                  </p>
-                </div>
+              {/* Visual Analytics with Recharts */}
+              <AdminVisualDashboard
+                lang={lang}
+                deliverables={deliverables}
+                bookings={bookings}
+                onNavigateToAdd={() => {
+                  resetForm();
+                  setActiveTab('add');
+                }}
+                onNavigateToList={() => setActiveTab('list')}
+              />
 
-                <div className="p-4 rounded-2xl bg-white dark:bg-[#1a1716] border border-black/10 dark:border-white/10 shadow-sm space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-sky-600 dark:text-sky-400">
-                      {lang === 'ar' ? 'قيد المونتاج والتلوين' : 'In Post-Production'}
-                    </span>
-                    <Video className="w-4 h-4 text-sky-500" />
-                  </div>
-                  <p className="text-2xl font-black text-[#141211] dark:text-white font-mono">
-                    {inPostCount}
-                  </p>
-                  <p className="text-[11px] text-[#141211]/50 dark:text-white/50">
-                    {lang === 'ar' ? 'جاري العمل في الاستوديو' : 'Active studio sessions'}
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-white dark:bg-[#1a1716] border border-black/10 dark:border-white/10 shadow-sm space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
-                      {lang === 'ar' ? 'جاهز للمعاينة والمراجعة' : 'Awaiting Review'}
-                    </span>
-                    <Clock className="w-4 h-4 text-purple-500" />
-                  </div>
-                  <p className="text-2xl font-black text-[#141211] dark:text-white font-mono">
-                    {inReviewCount}
-                  </p>
-                  <p className="text-[11px] text-[#141211]/50 dark:text-white/50">
-                    {lang === 'ar' ? 'بانتظار موافقة العميل' : 'Client review pending'}
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-white dark:bg-[#1a1716] border border-black/10 dark:border-white/10 shadow-sm space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                      {lang === 'ar' ? 'تم التسليم النهائي 4K' : 'Delivered Masters'}
-                    </span>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  </div>
-                  <p className="text-2xl font-black text-[#141211] dark:text-white font-mono">
-                    {deliveredCount}
-                  </p>
-                  <p className="text-[11px] text-[#141211]/50 dark:text-white/50">
-                    {lang === 'ar' ? 'جاهزة للنشر بالكامل' : 'Complete 4K master'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Engagement & Quick Actions Row */}
+              {/* Engagement & Recent Activity Row */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Engagement Card */}
                 <div className="p-5 rounded-2xl bg-gradient-to-br from-[#141211] to-[#201c1b] text-white border border-white/10 space-y-4">
@@ -1221,6 +1207,14 @@ export const AdminPortalModal: React.FC<AdminPortalModalProps> = ({
                 ))}
               </div>
             </div>
+          )}
+
+          {/* TAB 5: TESTIMONIALS MODERATION */}
+          {activeTab === 'testimonials' && (
+            <AdminTestimonialsModeration
+              lang={lang}
+              testimonials={testimonials}
+            />
           )}
         </div>
 

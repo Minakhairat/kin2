@@ -11,6 +11,7 @@ import { WhyKin } from './components/WhyKin';
 import { ServicesOverview } from './components/ServicesOverview';
 import { PricingCalculator } from './components/PricingCalculator';
 import { Portfolio } from './components/Portfolio';
+import { Testimonials } from './components/Testimonials';
 import { StudioAbout } from './components/StudioAbout';
 import { BookingContact } from './components/BookingContact';
 import { Footer } from './components/Footer';
@@ -134,6 +135,9 @@ export default function App() {
 
         {/* Official KIN Instagram Portal */}
         <Portfolio lang={lang} />
+
+        {/* Client Testimonials & Social Proof (Firestore Powered) */}
+        <Testimonials lang={lang} />
 
         {/* Studio & Korba Heritage */}
         <StudioAbout

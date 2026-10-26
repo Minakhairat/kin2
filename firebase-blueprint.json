@@ -66,6 +66,46 @@
         "createdAt": { "type": "string", "description": "Timestamp created" }
       },
       "required": ["id", "deliverableId", "authorEmail", "authorUid", "comment"]
+    },
+    "Testimonial": {
+      "title": "Testimonial",
+      "description": "Client review and testimonial for KIN Media Production",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Testimonial ID", "maxLength": 128 },
+        "clientName": { "type": "string", "description": "Name of the client", "maxLength": 128 },
+        "companyOrRole": { "type": "string", "description": "Client company, channel or title", "maxLength": 128 },
+        "rating": { "type": "number", "description": "Rating score between 1 and 5" },
+        "reviewAr": { "type": "string", "description": "Review text in Arabic", "maxLength": 2000 },
+        "reviewEn": { "type": "string", "description": "Review text in English", "maxLength": 2000 },
+        "serviceCategory": { "type": "string", "description": "Service category", "enum": ["podcasts", "reels", "commercials", "studio"] },
+        "avatarUrl": { "type": "string", "description": "Optional avatar or photo URL", "maxLength": 1000 },
+        "verified": { "type": "boolean", "description": "Whether the client project is verified" },
+        "approved": { "type": "boolean", "description": "Approval status by admin for public display" },
+        "createdAt": { "type": "string", "description": "Timestamp created" }
+      },
+      "required": ["id", "clientName", "rating", "reviewAr", "reviewEn", "approved"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Studio booking request and record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Booking reference ID", "maxLength": 128 },
+        "fullName": { "type": "string", "description": "Client full name", "maxLength": 128 },
+        "phone": { "type": "string", "description": "Client phone number", "maxLength": 32 },
+        "email": { "type": "string", "description": "Optional client email", "maxLength": 256 },
+        "service": { "type": "string", "description": "Service type", "maxLength": 64 },
+        "packageId": { "type": "string", "description": "Selected package ID", "maxLength": 64 },
+        "packageName": { "type": "string", "description": "Selected package name", "maxLength": 128 },
+        "preferredDate": { "type": "string", "description": "Preferred shoot date", "maxLength": 64 },
+        "addons": { "type": "array", "items": { "type": "string" }, "description": "Selected addons" },
+        "notes": { "type": "string", "description": "Client notes or details", "maxLength": 2000 },
+        "price": { "type": "number", "description": "Booking total or package price in EGP" },
+        "status": { "type": "string", "description": "Status of booking", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "description": "Timestamp created" }
+      },
+      "required": ["id", "fullName", "phone", "service", "status", "price"]
     }
   },
   "firestore": {
@@ -84,6 +124,14 @@
     "/deliverables/{deliverableId}/revisions/{revisionId}": {
       "schema": "Revision",
       "description": "Client revision and feedback requests per deliverable"
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": "Testimonial",
+      "description": "Client reviews and feedback displayed on public landing page"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Studio booking sessions and revenue tracking"
     }
   }
 }
